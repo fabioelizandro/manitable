@@ -13,4 +13,10 @@ func Test_manitable_suite(t *testing.T) {
 		table = table.Rename("c-a", "c-b")
 		assert.Equal(t, "c-b\nv-1\n", table.String())
 	})
+
+	t.Run("it renames multiple columns", func(t *testing.T) {
+		table := manitable.New(manitable.NewTableSource([]string{"c-a", "c-b"}, [][]string{{"v-1", "v-2"}}))
+		table = table.Rename("c-a", "c-b").Rename("c-b", "c-c")
+		assert.Equal(t, "c-b,c-c\nv-1,v-2\n", table.String())
+	})
 }
