@@ -21,7 +21,7 @@ func New(source *TableSource) ManiTable {
 	}
 }
 
-func (t ManiTable) Rename(origName string, newName string) ManiTable {
+func (t ManiTable) RenameColumn(origName string, newName string) ManiTable {
 	t.renames[origName] = newName
 
 	return ManiTable{
