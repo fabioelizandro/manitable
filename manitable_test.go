@@ -25,4 +25,16 @@ func Test_manitable_suite(t *testing.T) {
 		table = table.Rename("c-b", "c-c")
 		assert.Equal(t, "c-a\nv-1\n", table.String())
 	})
+
+	t.Run("it deletes columns", func(t *testing.T) {
+		table := manitable.New(manitable.NewTableSource([]string{"c-a", "c-b"}, [][]string{{"v-1", "v-2"}}))
+		table = table.DeleteColumn("c-a")
+		assert.Equal(t, "c-b\nv-2\n", table.String())
+	})
+
+	t.Run("it deletes multiple columns", func(t *testing.T) {
+		table := manitable.New(manitable.NewTableSource([]string{"c-a", "c-b", "c-c"}, [][]string{{"v-1", "v-2", "v-3"}}))
+		table = table.DeleteColumn("c-a").DeleteColumn("c-c")
+		assert.Equal(t, "c-b\nv-2\n", table.String())
+	})
 }

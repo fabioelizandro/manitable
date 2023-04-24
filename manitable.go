@@ -10,12 +10,14 @@ import (
 type ManiTable struct {
 	source  *TableSource
 	renames map[string]string
+	deletes map[string]bool
 }
 
 func New(source *TableSource) ManiTable {
 	return ManiTable{
 		source:  source,
 		renames: map[string]string{},
+		deletes: map[string]bool{},
 	}
 }
 
@@ -25,6 +27,17 @@ func (t ManiTable) Rename(origName string, newName string) ManiTable {
 	return ManiTable{
 		source:  t.source,
 		renames: t.renames,
+		deletes: t.deletes,
+	}
+}
+
+func (t ManiTable) DeleteColumn(s string) ManiTable {
+	t.deletes[s] = true
+
+	return ManiTable{
+		source:  t.source,
+		renames: t.renames,
+		deletes: t.deletes,
 	}
 }
 
@@ -32,7 +45,13 @@ func (t ManiTable) String() string {
 	buffer := bytes.NewBufferString("")
 
 	columns := []string{}
-	for _, column := range t.source.columns {
+	toBeDeleted := map[int]bool{}
+	for index, column := range t.source.columns {
+		if t.deletes[column] {
+			toBeDeleted[index] = true
+			continue
+		}
+
 		if newName, ok := t.renames[column]; ok {
 			column = newName
 		}
@@ -40,8 +59,22 @@ func (t ManiTable) String() string {
 		columns = append(columns, column)
 	}
 
+	rows := [][]string{}
+	for _, row := range t.source.rows {
+		newRow := []string{}
+		for index, cell := range row {
+			if toBeDeleted[index] {
+				continue
+			}
+
+			newRow = append(newRow, cell)
+		}
+
+		rows = append(rows, newRow)
+	}
+
 	output := [][]string{columns}
-	output = append(output, t.source.rows...)
+	output = append(output, rows...)
 
 	w := csv.NewWriter(buffer)
 	assert.NoErr(w.WriteAll(output))
