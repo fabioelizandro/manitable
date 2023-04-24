@@ -8,18 +8,20 @@ import (
 )
 
 type ManiTable struct {
-	source    *TableSource
-	renames   map[string]string
-	deletes   map[string]bool
-	additions map[string]TableCell
+	source       *TableSource
+	renames      map[string]string
+	deletes      map[string]bool
+	additions    map[string]TableCell
+	transformers map[string]TableCell
 }
 
 func New(source *TableSource) ManiTable {
 	return ManiTable{
-		source:    source,
-		renames:   map[string]string{},
-		deletes:   map[string]bool{},
-		additions: map[string]TableCell{},
+		source:       source,
+		renames:      map[string]string{},
+		deletes:      map[string]bool{},
+		additions:    map[string]TableCell{},
+		transformers: map[string]TableCell{},
 	}
 }
 
@@ -27,10 +29,11 @@ func (t ManiTable) RenameColumn(origName string, newName string) ManiTable {
 	t.renames[origName] = newName
 
 	return ManiTable{
-		source:    t.source,
-		renames:   t.renames,
-		deletes:   t.deletes,
-		additions: t.additions,
+		source:       t.source,
+		renames:      t.renames,
+		deletes:      t.deletes,
+		additions:    t.additions,
+		transformers: t.transformers,
 	}
 }
 
@@ -38,10 +41,11 @@ func (t ManiTable) DeleteColumn(s string) ManiTable {
 	t.deletes[s] = true
 
 	return ManiTable{
-		source:    t.source,
-		renames:   t.renames,
-		deletes:   t.deletes,
-		additions: t.additions,
+		source:       t.source,
+		renames:      t.renames,
+		deletes:      t.deletes,
+		additions:    t.additions,
+		transformers: t.transformers,
 	}
 }
 
@@ -49,10 +53,23 @@ func (t ManiTable) AddColumn(columnName string, cell TableCell) ManiTable {
 	t.additions[columnName] = cell
 
 	return ManiTable{
-		source:    t.source,
-		renames:   t.renames,
-		deletes:   t.deletes,
-		additions: t.additions,
+		source:       t.source,
+		renames:      t.renames,
+		deletes:      t.deletes,
+		additions:    t.additions,
+		transformers: t.transformers,
+	}
+}
+
+func (t ManiTable) TransformColumn(columnName string, cell TableCell) ManiTable {
+	t.transformers[columnName] = cell
+
+	return ManiTable{
+		source:       t.source,
+		renames:      t.renames,
+		deletes:      t.deletes,
+		additions:    t.additions,
+		transformers: t.transformers,
 	}
 }
 
@@ -61,10 +78,15 @@ func (t ManiTable) String() string {
 
 	columns := []string{}
 	toBeDeleted := map[int]bool{}
+	toBeTransformed := map[int]TableCell{}
 	for index, column := range t.source.columns {
 		if t.deletes[column] {
 			toBeDeleted[index] = true
 			continue
+		}
+
+		if cell, ok := t.transformers[column]; ok {
+			toBeTransformed[index] = cell
 		}
 
 		if newName, ok := t.renames[column]; ok {
@@ -74,10 +96,10 @@ func (t ManiTable) String() string {
 		columns = append(columns, column)
 	}
 
-	cells := []TableCell{}
+	addedCells := []TableCell{}
 	for columnName, cell := range t.additions {
 		columns = append(columns, columnName)
-		cells = append(cells, cell)
+		addedCells = append(addedCells, cell)
 	}
 
 	rows := [][]string{}
@@ -88,10 +110,14 @@ func (t ManiTable) String() string {
 				continue
 			}
 
+			if transformer, ok := toBeTransformed[index]; ok {
+				cell = transformer.Value(row)
+			}
+
 			newRow = append(newRow, cell)
 		}
 
-		for _, cell := range cells {
+		for _, cell := range addedCells {
 			newRow = append(newRow, cell.Value(row))
 		}
 
