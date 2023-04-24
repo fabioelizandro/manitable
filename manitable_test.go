@@ -19,4 +19,10 @@ func Test_manitable_suite(t *testing.T) {
 		table = table.Rename("c-a", "c-b").Rename("c-b", "c-c")
 		assert.Equal(t, "c-b,c-c\nv-1,v-2\n", table.String())
 	})
+
+	t.Run("it ignores non existing columns", func(t *testing.T) {
+		table := manitable.New(manitable.NewTableSource([]string{"c-a"}, [][]string{{"v-1"}}))
+		table = table.Rename("c-b", "c-c")
+		assert.Equal(t, "c-a\nv-1\n", table.String())
+	})
 }
