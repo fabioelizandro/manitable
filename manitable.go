@@ -79,6 +79,7 @@ func (t ManiTable) String() string {
 	columns := []string{}
 	toBeDeleted := map[int]bool{}
 	toBeTransformed := map[int]TableCell{}
+	columnsIndex := map[string]int{}
 	for index, column := range t.source.columns {
 		if t.deletes[column] {
 			toBeDeleted[index] = true
@@ -94,16 +95,19 @@ func (t ManiTable) String() string {
 		}
 
 		columns = append(columns, column)
+		columnsIndex[column] = len(columns) - 1
 	}
 
 	addedCells := []TableCell{}
 	for columnName, cell := range t.additions {
 		columns = append(columns, columnName)
 		addedCells = append(addedCells, cell)
+		columnsIndex[columnName] = len(columns) - 1
 	}
 
 	rows := [][]string{}
 	for _, row := range t.source.rows {
+		tableRow := newTableRow(columnsIndex, row)
 		newRow := []string{}
 		for index, cell := range row {
 			if toBeDeleted[index] {
@@ -111,14 +115,14 @@ func (t ManiTable) String() string {
 			}
 
 			if transformer, ok := toBeTransformed[index]; ok {
-				cell = transformer.Value(row)
+				cell = transformer.Value(tableRow)
 			}
 
 			newRow = append(newRow, cell)
 		}
 
 		for _, cell := range addedCells {
-			newRow = append(newRow, cell.Value(row))
+			newRow = append(newRow, cell.Value(tableRow))
 		}
 
 		rows = append(rows, newRow)
@@ -169,4 +173,23 @@ func (c InlineFTableCell) Value(row TableRow) string {
 // -- Table Row
 
 type TableRow interface {
+	Value(column string) string
+}
+
+type tableRow struct {
+	columns map[string]int
+	row     []string
+}
+
+func newTableRow(columns map[string]int, row []string) *tableRow {
+	return &tableRow{columns: columns, row: row}
+}
+
+func (r tableRow) Value(column string) string {
+	index, ok := r.columns[column]
+	if !ok {
+		return ""
+	}
+
+	return r.row[index]
 }

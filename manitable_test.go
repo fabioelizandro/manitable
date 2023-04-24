@@ -1,6 +1,7 @@
 package manitable_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/fabioelizandro/manitable"
@@ -77,7 +78,7 @@ func Test_manitable_suite(t *testing.T) {
 		assert.Equal(t, "c-a,c-b,c-c\nv-1,v-2,v-3\n", table.String())
 	})
 
-	t.Run("it transforms values for a given column", func(t *testing.T) {
+	t.Run("it replaces values for a given column", func(t *testing.T) {
 		table := manitable.New(manitable.NewTableSource([]string{"c-a"}, [][]string{{"v-1"}}))
 
 		table = table.TransformColumn("c-a", manitable.NewInlineFTableCell(func(row manitable.TableRow) string {
@@ -85,5 +86,15 @@ func Test_manitable_suite(t *testing.T) {
 		}))
 
 		assert.Equal(t, "c-a\nv-2\n", table.String())
+	})
+
+	t.Run("it transforms values for a given column", func(t *testing.T) {
+		table := manitable.New(manitable.NewTableSource([]string{"c-a"}, [][]string{{"v-1"}}))
+
+		table = table.TransformColumn("c-a", manitable.NewInlineFTableCell(func(row manitable.TableRow) string {
+			return strings.ToUpper(row.Value("c-a"))
+		}))
+
+		assert.Equal(t, "c-a\nV-1\n", table.String())
 	})
 }
