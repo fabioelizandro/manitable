@@ -37,4 +37,12 @@ func Test_manitable_suite(t *testing.T) {
 		table = table.DeleteColumn("c-a").DeleteColumn("c-c")
 		assert.Equal(t, "c-b\nv-2\n", table.String())
 	})
+
+	t.Run("it adds column", func(t *testing.T) {
+		table := manitable.New(manitable.NewTableSource([]string{"c-a"}, [][]string{{"v-1"}}))
+		table = table.AddColumn("c-b", func(row []string) string {
+			return "v-2"
+		})
+		assert.Equal(t, "c-a,c-b\nv-1,v-2\n", table.String())
+	})
 }
