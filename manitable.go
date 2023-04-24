@@ -11,7 +11,7 @@ type ManiTable struct {
 	source    *TableSource
 	renames   map[string]string
 	deletes   map[string]bool
-	additions map[string]func(row []string) string
+	additions map[string]TableCell
 }
 
 func New(source *TableSource) ManiTable {
@@ -19,7 +19,7 @@ func New(source *TableSource) ManiTable {
 		source:    source,
 		renames:   map[string]string{},
 		deletes:   map[string]bool{},
-		additions: map[string]func(row []string) string{},
+		additions: map[string]TableCell{},
 	}
 }
 
@@ -45,8 +45,8 @@ func (t ManiTable) DeleteColumn(s string) ManiTable {
 	}
 }
 
-func (t ManiTable) AddColumn(columnName string, f func(row []string) string) ManiTable {
-	t.additions[columnName] = f
+func (t ManiTable) AddColumn(columnName string, cell TableCell) ManiTable {
+	t.additions[columnName] = cell
 
 	return ManiTable{
 		source:    t.source,
@@ -74,10 +74,10 @@ func (t ManiTable) String() string {
 		columns = append(columns, column)
 	}
 
-	funcs := []func(row []string) string{}
-	for columnName, f := range t.additions {
+	cells := []TableCell{}
+	for columnName, cell := range t.additions {
 		columns = append(columns, columnName)
-		funcs = append(funcs, f)
+		cells = append(cells, cell)
 	}
 
 	rows := [][]string{}
@@ -91,8 +91,8 @@ func (t ManiTable) String() string {
 			newRow = append(newRow, cell)
 		}
 
-		for _, f := range funcs {
-			newRow = append(newRow, f(row))
+		for _, cell := range cells {
+			newRow = append(newRow, cell.Value(row))
 		}
 
 		rows = append(rows, newRow)
@@ -120,4 +120,27 @@ func NewTableSource(columns []string, rows [][]string) *TableSource {
 		columns: columns,
 		rows:    rows,
 	}
+}
+
+// -- Table Cell
+
+type TableCell interface {
+	Value(row TableRow) string
+}
+
+type InlineFTableCell struct {
+	f func(row TableRow) string
+}
+
+func NewInlineFTableCell(f func(row TableRow) string) InlineFTableCell {
+	return InlineFTableCell{f: f}
+}
+
+func (c InlineFTableCell) Value(row TableRow) string {
+	return c.f(row)
+}
+
+// -- Table Row
+
+type TableRow interface {
 }

@@ -40,21 +40,21 @@ func Test_manitable_suite(t *testing.T) {
 
 	t.Run("it adds column", func(t *testing.T) {
 		table := manitable.New(manitable.NewTableSource([]string{"c-a"}, [][]string{{"v-1"}}))
-		table = table.AddColumn("c-b", func(row []string) string {
+		table = table.AddColumn("c-b", manitable.NewInlineFTableCell(func(row manitable.TableRow) string {
 			return "v-2"
-		})
+		}))
 		assert.Equal(t, "c-a,c-b\nv-1,v-2\n", table.String())
 	})
 
 	t.Run("it adds multiple columns", func(t *testing.T) {
 		table := manitable.New(manitable.NewTableSource([]string{"c-a"}, [][]string{{"v-1"}}))
 		table = table.
-			AddColumn("c-b", func(row []string) string {
+			AddColumn("c-b", manitable.NewInlineFTableCell(func(row manitable.TableRow) string {
 				return "v-2"
-			}).
-			AddColumn("c-c", func(row []string) string {
+			})).
+			AddColumn("c-c", manitable.NewInlineFTableCell(func(row manitable.TableRow) string {
 				return "v-3"
-			})
+			}))
 
 		assert.Equal(t, "c-a,c-b,c-c\nv-1,v-2,v-3\n", table.String())
 	})
