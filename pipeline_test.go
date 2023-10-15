@@ -61,29 +61,21 @@ func Test_pipeline_suite(t *testing.T) {
 }
 
 func transformAllInUpperCase(table manitable.Table) manitable.Table {
-	rows := table.Rows()
-	newRows := make([][]string, len(rows))
-	for i, row := range rows {
-		newRows[i] = make([]string, len(row))
-		for j, value := range row {
-			newRows[i][j] = strings.ToUpper(value)
-		}
-	}
-
-	return manitable.NewTable(table.Columns(), newRows)
+	return table.
+		Mutate().
+		Append(func(_ string, value string) string {
+			return strings.ToUpper(value)
+		}).
+		Run()
 }
 
 func transformAppendCharToAllValues(char rune) manitable.Transform {
 	return func(table manitable.Table) manitable.Table {
-		rows := table.Rows()
-		newRows := make([][]string, len(rows))
-		for i, row := range rows {
-			newRows[i] = make([]string, len(row))
-			for j, value := range row {
-				newRows[i][j] = value + string(char)
-			}
-		}
-
-		return manitable.NewTable(table.Columns(), newRows)
+		return table.
+			Mutate().
+			Append(func(_ string, value string) string {
+				return value + string(char)
+			}).
+			Run()
 	}
 }
