@@ -1,4 +1,4 @@
-package manitable
+package pipeline
 
 type Table struct {
 	columns []string

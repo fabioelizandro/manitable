@@ -1,4 +1,4 @@
-package manitable
+package pipeline
 
 type Transform func(Table) Table
 

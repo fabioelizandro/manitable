@@ -1,66 +1,66 @@
-package manitable_test
+package pipeline_test
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/fabioelizandro/manitable"
+	"github.com/fabioelizandro/manitable/modules/pipeline"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_pipeline_suite(t *testing.T) {
 	t.Run("applies transformation to table", func(t *testing.T) {
-		pipeline := manitable.NewPipeline(
-			[]manitable.Transform{
+		pipe := pipeline.NewPipeline(
+			[]pipeline.Transform{
 				transformAllInUpperCase,
 			},
 		)
 
-		newTable := pipeline.Run(manitable.NewTable([]string{"name"}, [][]string{{"fabio"}}))
+		newTable := pipe.Run(pipeline.NewTable([]string{"name"}, [][]string{{"fabio"}}))
 
 		assert.Equal(
 			t,
-			manitable.NewTable([]string{"name"}, [][]string{{"FABIO"}}),
+			pipeline.NewTable([]string{"name"}, [][]string{{"FABIO"}}),
 			newTable,
 		)
 	})
 
 	t.Run("applies multiple transformations", func(t *testing.T) {
-		pipeline := manitable.NewPipeline(
-			[]manitable.Transform{
+		pipe := pipeline.NewPipeline(
+			[]pipeline.Transform{
 				transformAllInUpperCase,
 				transformAppendCharToAllValues('e'),
 			},
 		)
 
-		newTable := pipeline.Run(manitable.NewTable([]string{"name"}, [][]string{{"fabio"}}))
+		newTable := pipe.Run(pipeline.NewTable([]string{"name"}, [][]string{{"fabio"}}))
 
 		assert.Equal(
 			t,
-			manitable.NewTable([]string{"name"}, [][]string{{"FABIOe"}}),
+			pipeline.NewTable([]string{"name"}, [][]string{{"FABIOe"}}),
 			newTable,
 		)
 	})
 
 	t.Run("applies transformations in the correct sequence", func(t *testing.T) {
-		pipeline := manitable.NewPipeline(
-			[]manitable.Transform{
+		pipe := pipeline.NewPipeline(
+			[]pipeline.Transform{
 				transformAppendCharToAllValues('e'),
 				transformAllInUpperCase,
 			},
 		)
 
-		newTable := pipeline.Run(manitable.NewTable([]string{"name"}, [][]string{{"fabio"}}))
+		newTable := pipe.Run(pipeline.NewTable([]string{"name"}, [][]string{{"fabio"}}))
 
 		assert.Equal(
 			t,
-			manitable.NewTable([]string{"name"}, [][]string{{"FABIOE"}}),
+			pipeline.NewTable([]string{"name"}, [][]string{{"FABIOE"}}),
 			newTable,
 		)
 	})
 }
 
-func transformAllInUpperCase(table manitable.Table) manitable.Table {
+func transformAllInUpperCase(table pipeline.Table) pipeline.Table {
 	return table.
 		Mutate().
 		Append(func(_ string, value string) string {
@@ -69,8 +69,8 @@ func transformAllInUpperCase(table manitable.Table) manitable.Table {
 		Run()
 }
 
-func transformAppendCharToAllValues(char rune) manitable.Transform {
-	return func(table manitable.Table) manitable.Table {
+func transformAppendCharToAllValues(char rune) pipeline.Transform {
+	return func(table pipeline.Table) pipeline.Table {
 		return table.
 			Mutate().
 			Append(func(_ string, value string) string {
